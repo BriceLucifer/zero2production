@@ -1,4 +1,4 @@
-use actix_web::{App, HttpRequest, HttpResponse, HttpResponseBuilder, HttpServer, Responder, web};
+use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, web};
 
 async fn greet(req: HttpRequest) -> impl Responder {
     let name = req.match_info().get("name").unwrap_or("World");
@@ -20,15 +20,4 @@ async fn main() -> std::io::Result<()> {
     .bind("127.0.0.1:8000")?
     .run()
     .await
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::health_check;
-
-    #[tokio::test]
-    async fn health_check_succeeds() {
-        let response = health_check().await;
-        assert!(response.status().is_success())
-    }
 }
