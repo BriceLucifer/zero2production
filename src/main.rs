@@ -1,23 +1,26 @@
-use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, web};
+use std::net::TcpListener;
 
-async fn greet(req: HttpRequest) -> impl Responder {
-    let name = req.match_info().get("name").unwrap_or("World");
-    format!("hello {}\n", &name)
-}
-
-async fn health_check() -> HttpResponse {
-    HttpResponse::Ok().finish()
-}
+use sqlx::PgPool;
+use tracing::subscriber::set_global_default;
+use zero2prod::{
+    configuration::get_configuration,
+    startup::run,
+    telemetry::{get_subscriber, init_subscriber},
+};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new()
-            // .route("/", web::get().to(greet))
-            // .route("/{name}", web::get().to(greet))
-            .route("/health_check", web::get().to(health_check))
-    })
-    .bind("127.0.0.1:8000")?
-    .run()
-    .await
+    let subscriber = get_subscriber("zero2prod".into(), "info".into(), std::io::stdout);
+    init_subscriber(subscriber);
+    let subscriber = get_subscriber("zero2prod".into(), "info".into(), std::io::stdout);
+
+    set_global_default(subscriber).expect("Failed to set subscriber");
+
+    let configuration = get_configuration().expect("Failed to read configuration");
+    let connection_pool = PgPool::connect(&configuration.database.connection_string())
+        .await
+        .expect("Failed to connect to Postgres");
+    let address = format!("127.0.0.1:{}", configuration.application_port);
+    let listener = TcpListener::bind(address)?;
+    run(listener, connection_pool)?.await
 }

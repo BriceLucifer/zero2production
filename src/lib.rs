@@ -1,6 +1,16 @@
+pub mod configuration;
+pub mod routes;
+pub mod startup;
+pub mod telemetry;
+
 use actix_web::dev::Server;
 use actix_web::{App, HttpResponse, HttpServer, web};
 use std::net::TcpListener;
+use tracing::Subscriber;
+use tracing::subscriber::set_global_default;
+use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
+use tracing_log::LogTracer;
+use tracing_subscriber::{EnvFilter, Registry, layer::SubscriberExt};
 
 async fn health_check() -> HttpResponse {
     HttpResponse::Ok().finish()
