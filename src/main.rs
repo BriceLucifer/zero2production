@@ -1,7 +1,7 @@
 use std::{net::TcpListener, time::Duration};
 
 use secrecy::ExposeSecret;
-use sqlx::{PgPool, postgres::PgPoolOptions};
+use sqlx::postgres::PgPoolOptions;
 use zero2prod::{
     configuration::get_configuration,
     startup::run,
