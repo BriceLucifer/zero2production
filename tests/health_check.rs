@@ -59,7 +59,7 @@ mod test {
     pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
         // create database
         let mut connection =
-            PgConnection::connect(&config.conncetion_string_without_db().expose_secret())
+            PgConnection::connect(&config.connection_string_without_db().expose_secret())
                 .await
                 .expect("Failed to connect to Postgres");
         connection
