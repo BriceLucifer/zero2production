@@ -11,33 +11,32 @@ pub struct FormData {
     name: String,
 }
 
-pub async fn subscribe(form: web::Form<FormData>, connection: web::Data<PgPool>) -> HttpResponse {
-    let request_id = Uuid::new_v4();
-    tracing::info!(
-        "request_id {} - adding '{}' '{}' as a new subscriber",
-        request_id,
-        form.email,
-        form.name
-    );
-    let request_span = tracing::info_span!(
-        "Adding a new subscriber.",
-        %request_id,
+#[tracing::instrument(
+    name = "Adding a new subscriber",
+    skip(form, pool),
+    fields(
         subscriber_email = %form.email,
-        subscriber_name = %form.name,
-    );
+        subscriber_name = %form.name
+    )
+)]
 
-    tracing::info!(
-        "request_id {} - Saving new subscriber details in the database",
-        request_id
-    );
+pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> HttpResponse {
+    match insert_subscriber(&pool, &form).await {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(e) => {
+            tracing::error!("Failed to execute query: {:?}", e);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
 
-    let _request_span_guard = request_span.enter();
+#[tracing::instrument(
+    name = "Saving new subscriber details in the database",
+    skip(form, pool)
+)]
 
-    // do not call enter
-    // .instrument takes care of it at the right moments
-    let query_span = tracing::info_span!("Saving new subscriber details in the database");
-
-    let query_result = sqlx::query!(
+pub async fn insert_subscriber(pool: &PgPool, form: &FormData) -> Result<(), sqlx::Error> {
+    let _ = sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at)
         VALUES ($1, $2, $3, $4)
@@ -47,25 +46,11 @@ pub async fn subscribe(form: web::Form<FormData>, connection: web::Data<PgPool>)
         form.name,
         Utc::now()
     )
-    .execute(connection.get_ref())
-    .instrument(query_span)
-    .await;
-
-    match query_result {
-        Ok(_) => {
-            tracing::info!(
-                "request_id {} - New subcriber details have been saved",
-                request_id
-            );
-            HttpResponse::Ok().finish()
-        }
-        Err(e) => {
-            tracing::error!(
-                "request_id {} - Failed to execute query: {:?}",
-                request_id,
-                e
-            );
-            HttpResponse::InternalServerError().finish()
-        }
-    }
+    .execute(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {:?}", e);
+        e
+    })?;
+    Ok(())
 }
