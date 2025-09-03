@@ -21,7 +21,7 @@ async fn main() -> std::io::Result<()> {
 
     let address = format!(
         "{}:{}",
-        configuration.application.port, configuration.application.port
+        configuration.application.host, configuration.application.port
     );
     let listener = TcpListener::bind(address)?;
     run(listener, connection_pool)?.await

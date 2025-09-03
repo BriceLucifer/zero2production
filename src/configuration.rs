@@ -24,7 +24,7 @@ pub struct DatabaseSettings {
 impl DatabaseSettings {
     pub fn connection_string(&self) -> Secret<String> {
         Secret::new(format!(
-            "postgres://{}:{}@{}:{}/{}",
+            "postgres://{}:{}@{}:{}/{}?connect_timeout=2",
             self.username,
             self.password.expose_secret(),
             self.host,
@@ -35,7 +35,7 @@ impl DatabaseSettings {
 
     pub fn connection_string_without_db(&self) -> Secret<String> {
         Secret::new(format!(
-            "postgres://{}:{}@{}:{}",
+            "postgres://{}:{}@{}:{}?connect_timeout=2",
             self.username,
             self.password.expose_secret(),
             self.host,
