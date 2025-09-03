@@ -8,7 +8,7 @@ ENV SQLX_OFFLINE=true
 RUN cargo build --release
 
 # Runtime Stage
-FROM rust AS runtime
+FROM rust:slim AS runtime
 
 WORKDIR /app
 # COPY the compiler binary from the builder environment
