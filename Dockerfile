@@ -16,7 +16,7 @@ ENV SQLX_OFFLINE=true
 RUN cargo build --release --bin zero2prod
 
 # Runtime Stage
-FROM debian:bullseye-slim AS runtime
+FROM debian:bookworm-slim AS runtime
 
 WORKDIR /app
 # COPY the compiler binary from the builder environment
@@ -31,4 +31,4 @@ RUN apt-get update -y \
 COPY --from=builder /app/target/release/zero2prod zero2prod
 COPY configuration configuration
 ENV APP_ENVIRONMENT=production
-ENTRYPOINT [ "./target/release/zero2prod" ]
+ENTRYPOINT [ "./zero2prod" ]
